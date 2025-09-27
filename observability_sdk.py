@@ -156,8 +156,11 @@ class ObservabilitySDK:
             raise ImportError("openai package required for evaluations")
         api_key = os.getenv('OPENAI_API_KEY')  # Use static key, headers from manager
         base_url = self.custom_llm_url or 'https://api.openai.com/v1'
-        headers = self.apigee_manager.get_headers()  # Get fresh headers with token
-        logger.info(f"Using custom LLM gateway: base_url={base_url}, with Apigee headers: {list(headers.keys())}")
+        # Generate a UUID for this evaluation request
+        import uuid
+        request_id = str(uuid.uuid4())
+        headers = self.apigee_manager.get_headers(request_id=request_id)  # Get fresh headers with token, use_case_id, and request_id
+        logger.info(f"Using custom LLM gateway: base_url={base_url}, with Apigee headers: {list(headers.keys())}, request_id={request_id}")
         openai_client = OpenAI(
             base_url=base_url,
             api_key=api_key,
@@ -613,6 +616,7 @@ class ApigeeManager:
         self._last_refresh = 0
         self._token = None
         self._headers = {}
+        self.use_case_id = os.getenv('USE_CASE_ID', 'default_use_case')  # Default use case ID
     
     def get_token(self) -> str:
         """Fetch or return cached Apigee token."""
@@ -621,10 +625,16 @@ class ApigeeManager:
             self._refresh_token()
         return self._token
     
-    def get_headers(self) -> Dict[str, str]:
-        """Get headers including the token."""
+    def get_headers(self, request_id: str = None) -> Dict[str, str]:
+        """Get headers including the token, use_case_id, and request_id."""
+        import uuid
         token = self.get_token()
-        return {"Authorization": f"Bearer {token}", **self._headers}
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "X-Use-Case-ID": self.use_case_id,
+            "X-Request-ID": request_id or str(uuid.uuid4())  # Generate UUID if not provided
+        }
+        return {**headers, **self._headers}
     
     def _refresh_token(self):
         """Call Apigee API to get new token."""

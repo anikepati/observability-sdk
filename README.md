@@ -99,7 +99,16 @@ Set via environment variables:
 - `CUSTOM_LLM_URL`: Gateway URL.
 - `APIGEE_KEY`: API key.
 - `CUSTOM_HEADERS_JSON`: JSON headers.
+- `USE_CASE_ID`: Use case identifier sent in headers (default: 'default_use_case').
 - Other: Endpoints, sampling rates, etc.
+
+### Headers for Online Sampling
+For online evaluations, the SDK automatically includes:
+- `Authorization: Bearer <token>` - Apigee access token
+- `X-Use-Case-ID: <use_case_id>` - From USE_CASE_ID env var
+- `X-Request-ID: <uuid>` - Auto-generated UUID for each request
+
+These headers are refreshed automatically and used for all LLM evaluation calls.
 
 ## Deployment and Scaling
 - Lightweight: Minimal runtime impact.
@@ -175,6 +184,18 @@ def advanced_reasoning_agent(user_query: str) -> str:
     
     return final_result
 ```
+
+#### Online Sampling with Headers
+When online evaluations run, they automatically include authenticated headers:
+```python
+# Headers sent with each evaluation request:
+{
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIs...",
+    "X-Use-Case-ID": "genai_observability_prod",
+    "X-Request-ID": "550e8400-e29b-41d4-a716-446655440000"  # UUID
+}
+```
+Sampling metadata is logged in span attributes for tracking evaluation coverage.
 
 ## Installation
 ```bash

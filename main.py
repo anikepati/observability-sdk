@@ -30,6 +30,7 @@ from observability_sdk import ObservabilitySDK
 # os.environ['APIGEE_CLIENT_ID'] = 'your_client_id'  # Apigee client ID
 # os.environ['APIGEE_CLIENT_SECRET'] = 'your_client_secret'  # Apigee client secret
 # os.environ['APIGEE_REFRESH_INTERVAL'] = '3600'  # Apigee token refresh interval
+# os.environ['USE_CASE_ID'] = 'your_use_case_id'  # Use case identifier for headers
 
 # Example settings (uncomment to override)
 os.environ['PHOENIX_COLLECTOR_ENDPOINT'] = 'http://localhost:6006/'  # Local Phoenix
@@ -438,6 +439,27 @@ def advanced_reasoning_agent_with_tracing(user_query: str) -> str:
     
     return f"Advanced Agent Result: {final_result} (Confidence: {confidence_score:.2f})"
 
+# Test function to verify headers with use_case_id and request_id
+def test_headers_and_sampling():
+    """Test function to demonstrate headers and sampling setup."""
+    print("Testing headers and sampling configuration...")
+    
+    # Test ApigeeManager headers
+    headers = sdk.apigee_manager.get_headers()
+    print(f"Generated headers: {headers}")
+    
+    # Test eval model setup with new headers
+    eval_model = sdk.setup_eval_model()
+    print(f"Eval model custom headers: {eval_model.custom_headers}")
+    
+    # Test sampling configuration (if available)
+    if hasattr(sdk, 'sample_rate'):
+        print(f"Sample rate: {sdk.sample_rate}")
+    if hasattr(sdk, 'sample_tracking_enabled'):
+        print(f"Sample tracking enabled: {sdk.sample_tracking_enabled}")
+    
+    return "Headers and sampling test completed"
+
 if __name__ == "__main__":
     input_data = "Integrate math functions like x^2 and search AI tools. # Email: test@example.com"
     reference = "Expected: Integrated results and search mock."
@@ -480,6 +502,10 @@ if __name__ == "__main__":
         advanced_tracing_query = "Plan a conference: find location, calculate budget, schedule speakers."
         advanced_tracing_result = advanced_reasoning_agent_with_tracing(advanced_tracing_query)
         print(f"Advanced Reasoning Agent Result: {advanced_tracing_result}")
+        
+        # New: Test Headers and Sampling
+        test_result = test_headers_and_sampling()
+        print(f"Test Headers Result: {test_result}")
         
     except Exception as e:
         print(f"Error in workflow: {e}")
